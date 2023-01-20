@@ -23,6 +23,9 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
 //Attach Route Handlers
+app.get("/", (req, res) => {
+    res.json({ message: "welcome to my revie-app api" });
+});
 app.use("/api/v1/auth/", authRouter(express.Router()));
 app.use("/api/v1/apartments/", apartmentRouter(express.Router()));
 app.use("/api/v1/reviews/", reviewsRouter(express.Router()));
