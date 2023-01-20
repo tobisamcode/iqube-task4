@@ -1,40 +1,33 @@
-import cloudinary from "cloudinary";
+import { v2 as cloudinary } from "cloudinary";
 import multer from "multer";
 import path from "path";
 import dotenv from "dotenv";
+import DatauriParser from "datauri/parser";
+const parser = new DatauriParser();
 
 dotenv.config();
 
-const storage = multer.diskStorage({
-    destination: function(req, file, cb) {
-        if (file.mimetype.includes("image")) {
-            cb(null, "./file-uploads");
-        } else {
-            cb({ message: "only image files are allowed!" }, false);
-        }
-    },
-    filename: function(req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname));
-    },
-});
+export const storage = multer.memoryStorage();
 
-export const upload = multer({ storage: storage });
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export const uploads = (file) =>
+export const upload = (file) =>
     new Promise((resolve, reject) => {
+        const data = parser.format(
+            path.extname(file.originalname).toString(),
+            file.buffer
+        );
         cloudinary.uploader.upload(
-            file,
-            (result) => {
-                if (result.error) {
-                    reject(result.error);
-                } else {
-                    resolve({ url: result.url, id: result.public_id });
+            data.content, { resource_type: "auto" },
+            (err, res) => {
+                if (err) {
+                    reject(err);
                 }
-            }, { resource_type: "auto" }
+                resolve(res);
+            }
         );
     });
